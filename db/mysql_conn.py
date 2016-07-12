@@ -103,6 +103,19 @@ class MysqlDb(object):
                 ret_data.append(0)
         return ret_data
     
+    def get_text(self, list_id):
+        cur = self.conn.cursor()
+        sql = '''
+        select message
+        from {}
+        where id in {}
+        '''.format(self.table_name, list_id)
+        cur.execute(sql)
+        ret_data = []
+        for row in cur.fetchall():
+            ret_data.append(row[0])
+        return ret_data
+        
     def row_count(self, rec_id):
         cur = self.conn.cursor()
         sql = 'select count(*) from {} where id = {}'.format(self.table_name, rec_id)
@@ -112,7 +125,7 @@ class MysqlDb(object):
     
 if __name__ == '__main__':
     obj = MysqlDb()
-    import filter01
+    import previous.filter01 as filter01
     measure_data = filter01.read_line('../data/measurement.txt')
     un_measure = filter01.read_line('../data/unmeasurement.txt')
     for data in un_measure:
