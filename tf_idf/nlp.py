@@ -28,7 +28,7 @@ class CRFWordSegment(object):
         crf = CRF()
         fileUtil = FileUtil()
         crf.create_file_input(msg)
-        os.system('/home/ecp/program/crf_lib -m '+model_path+' crf.test.data > crf.result')
+        os.system('/home/ecp/program/crf_lib/crf_test -m '+model_path+' crf.test.data > crf.result')
 
         lst = fileUtil.read_file('crf.result')
         char_lst = [a.split('\t')[0] for a in lst]
