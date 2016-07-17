@@ -47,9 +47,9 @@ class PreProcessing(object):
 
 if __name__ == '__main__':
     loader = Loader()
-    word_lst = loader.get_list('data/testdatatxt.txt')
+    word_lst = loader.get_list('../data/testdatatxt.txt')
     pre_process = PreProcessing()
-    lst = pre_process.process2(word_lst)
+    lst = pre_process.process(word_lst)
     print lst
     #print pickle.load(open('data/obj2/filter.obj','rb'))
 #     loader = Loader()

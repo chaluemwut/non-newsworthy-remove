@@ -63,7 +63,8 @@ class FileUtil:
     @staticmethod    
     def read_file(file_name):
         with codecs.open(file_name, 'r', 'utf-8') as file:
-            return unicode(file.readlines(), 'utf-8')
+            return file.readlines()
+#             return unicode(file.readlines(), 'utf-8')
         return []
     
     def template_write_file(self, file_name, message, option):

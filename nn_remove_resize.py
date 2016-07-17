@@ -37,9 +37,12 @@ def tf_idf(tf_obj, msg, all_y, index_train, index_test):
     
     idx_lst_1, idx_lst_0 = get_index(index_train, all_y)
     
-    idx_measure_corpus = idx_lst_1[0:50]
-    data_test = idx_lst_1[50:70]
-    data_test.extend(idx_lst_0[0:20])
+    tf_idf_training_size = int(len(idx_lst_1)*(.8))
+    tf_idf_test_size = int(len(idx_lst_1)*(.2))
+    
+    idx_measure_corpus = idx_lst_1[0:tf_idf_training_size]
+    data_test = idx_lst_1[tf_idf_training_size:(tf_idf_training_size+tf_idf_test_size)]
+    data_test.extend(idx_lst_0[0:tf_idf_test_size])
     
     measure_corpus = np_msg[idx_measure_corpus]
     
@@ -66,7 +69,7 @@ def tf_idf(tf_obj, msg, all_y, index_train, index_test):
     cosin_max = cosin_lst[f1_max_idx]
     
     total_train_time = time.time() - s_train_time
-    tf_idf_train_time.append(total_train_time)
+    tf_idf_train_time.append(total_train_time/tf_idf_training_size)
     
     s_predict_time = time.time()
     per_y_pred = []
@@ -82,7 +85,7 @@ def tf_idf(tf_obj, msg, all_y, index_train, index_test):
     per_y_pred = np.array(per_y_pred)
     
     total_predict_time = time.time() - s_predict_time
-    tf_idf_predict_time.append(total_predict_time)
+    tf_idf_predict_time.append(total_predict_time/tf_idf_test_size)
     
     return f1_score(y_true=per_y_true, y_pred=per_y_pred)
 
@@ -93,14 +96,14 @@ def ml(x_train, x_test, y_train, y_test):
     s_train_time = time.time()
     ml.fit(x_train, y_train)
     total_train = time.time() - s_train_time
-    supervise_train_time.append(total_train)
+    supervise_train_time.append(total_train/len(x_train))
     
     s_predict_time = time.time()
     y_pred = ml.predict(x_test)
     total_predict = time.time() - s_predict_time
-    supervise_predict_time.append(total_predict)
+    supervise_predict_time.append(total_predict/len(x_test))
     
-    return f1_score(y_test, y_pred)  
+    return f1_score(y_true=y_test, y_pred=y_pred)  
 
 def get_all_data():
     measure = [str(x) for x in pickle.load(open('data/data_new_100/measure.obj', 'rb'))]
@@ -119,43 +122,48 @@ def get_all_data():
     return x, y, msg_lst
 
 def process():
-    f1_tf_idf_lst = []
-    f1_ml_lst = []
     all_x, all_y, msg_lst = get_all_data()
     pre_process = PreProcessing()
     all_doc = pre_process.process(msg_lst)
     tf_obj = TFIDF(all_doc)
     
-    for i in range(0, 200):
-        print 'start ',i
-        r = random.randint(1, 10000)
-        indx = range(0, len(all_y))
-        x_train, x_test, y_train, y_test, indices_train, indices_test = train_test_split(all_x, all_y, indx, test_size=0.2, random_state=r)
-        
-        f1_tf_idf = tf_idf(tf_obj, all_doc, all_y, indices_train, indices_test)
-        f1_ml = ml(x_train, x_test, y_train, y_test)
-        
-        f1_tf_idf_lst.append(f1_tf_idf)
-        f1_ml_lst.append(f1_ml)
-        
-        number_test_data.append(len(y_test))
-        
-        print 'tf idf ', np.average(f1_tf_idf_lst)
-        print 'ml ', np.average(f1_ml_lst)        
-        print 'end '
+    result_tf_idf = {}
+    result_ml = {}
+    training_size = ['0.2', '0.4', '0.6', '0.8']
+    for s in training_size:
+        per_tf_idf = []
+        per_ml = []
+        for i in range(0, 200):
+            print ' training size ',s ,' i ', i
+            r = random.randint(1, 10000)
+            indx = range(0, len(all_y))
+            x_train, x_test, y_train, y_test, indices_train, indices_test = train_test_split(all_x, all_y, indx, test_size=float(s), random_state=r)
+            
+            f1_tf_idf = tf_idf(tf_obj, all_doc, all_y, indices_train, indices_test)
+            f1_ml = ml(x_train, x_test, y_train, y_test)
+            
+            per_tf_idf.append(f1_tf_idf)
+            per_ml.append(f1_ml)
+            
+        result_tf_idf[s] = per_tf_idf
+        result_ml[s] = per_ml
+        print 'average tf idf ', np.average(per_tf_idf)
+        print 'average ml ', np.average(per_ml)
     
-    pickle.dump(f1_tf_idf_lst, open('data/non_newsworthy_remove/f1_tf_idf.obj', 'wb'))
-    pickle.dump(f1_ml_lst, open('data/non_newsworthy_remove/f1_ml.obj', 'wb'))
-     
-    pickle.dump(tf_idf_predict_time, open('data/non_newsworthy_remove/tf_idf_predict_time', 'wb'))
-    pickle.dump(supervise_predict_time, open('data/non_newsworthy_remove/supervise_predict_time', 'wb'))
-    pickle.dump(number_test_data, open('data/non_newsworthy_remove/number_test_data', 'wb'))
-       
-    print 'tf idf ', np.average(f1_tf_idf_lst)
-    print 'ml ', np.average(f1_ml_lst)
-    print 'average tf idf predict ', np.average(tf_idf_predict_time)
-    print 'average machine learning ', np.average(supervise_predict_time)
-    print 'number of test', number_test_data
+    for s in training_size:
+        print 'test size ', s
+        print np.average(result_tf_idf[s])
+        print np.average(result_ml[s])
+        
+    str_data_path = 'data/nn/'
+    pickle.dump(tf_idf_predict_time, open(str_data_path+'tf_idf_predict_time.obj', 'wb'))
+    pickle.dump(tf_idf_train_time, open(str_data_path+'tf_idf_train_time.obj', 'wb'))
+    pickle.dump(supervise_predict_time, open(str_data_path+'supervise_predict_time.obj', 'wb'))
+    pickle.dump(supervise_train_time, open(str_data_path+'supervise_train_time.obj', 'wb'))
+    
+    pickle.dump(result_tf_idf, open(str_data_path+'result_tf_id.obj','wb'))
+    pickle.dump(result_ml, open(str_data_path+'result_ml.obj', 'wb'))
+    
     
 if __name__ == '__main__':
-        process()
+    process()

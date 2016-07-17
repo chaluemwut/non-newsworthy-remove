@@ -4,8 +4,8 @@ class MysqlDb(object):
     table_name = 'training_data_e1'
     
     def __init__(self):
-        self.conn = mysql.connector.connect(user='root', password='Rvpooh123',
-                              host='192.168.99.100',
+        self.conn = mysql.connector.connect(user='root', password='[6iuiy,pN',
+                              host='localhost',
                               database='sdc')
         
     def get_75_row(self, cred_value):
