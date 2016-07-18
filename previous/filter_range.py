@@ -13,8 +13,8 @@ def read_line(file_name):
         
 def process(data_size):
     full_training_size = 150
-    training_size = full_training_size - data_size
-    half_training_size = training_size / 2
+    test_size = full_training_size - data_size
+    half_training_size = test_size / 2
     
     db = MysqlDb()
     rowIdx = RowIndex() 
